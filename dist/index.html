@@ -1,0 +1,220 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <meta name="description" content="An interactive K-means simulation for grouping students by Mathematics, Science, and English marks." />
+  <title>K-Means Marks Lab</title>
+  <link rel="icon" type="image/svg+xml" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 64 64'%3E%3Crect width='64' height='64' rx='14' fill='%230b132b'/%3E%3Ccircle cx='18' cy='19' r='6' fill='%235eead4'/%3E%3Ccircle cx='45' cy='18' r='6' fill='%23ffb86b'/%3E%3Ccircle cx='23' cy='45' r='6' fill='%238b9cf6'/%3E%3Cpath d='M40 38l12 12m0-12L40 50' stroke='white' stroke-width='5' stroke-linecap='round'/%3E%3C/svg%3E" />
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;600;700&amp;family=DM+Serif+Display:ital@0;1&amp;display=swap" rel="stylesheet" />
+  <link rel="stylesheet" href="styles.css" />
+</head>
+<body>
+  <header class="topbar">
+    <div class="brand">
+      <span class="brand-mark" aria-hidden="true">k</span>
+      <span><b>K-Means</b><small>marks lab</small></span>
+    </div>
+    <nav aria-label="Main navigation">
+      <a href="#simulator">Simulator</a>
+      <a href="#results">Results</a>
+      <a href="#formula">Formula</a>
+    </nav>
+    <div class="status-pill" id="statusPill"><span></span><b>Ready to simulate</b></div>
+  </header>
+
+  <main>
+    <div class="experience-shell">
+    <section class="intro" aria-labelledby="pageTitle">
+      <div class="intro-copy">
+        <p class="eyebrow">INTERACTIVE SIMULATION</p>
+        <h1 id="pageTitle">Watch <em>similar marks</em> find their group.</h1>
+        <p>Enter marks, choose K and follow every centroid as it moves. No code required.</p>
+        <a class="jump-link" href="#simulator">Open the simulator <span>↘</span></a>
+      </div>
+      <div class="hero-visual" aria-hidden="true">
+        <div class="orbit orbit-one"></div>
+        <div class="orbit orbit-two"></div>
+        <div class="student-dot dot-one">S02</div>
+        <div class="student-dot dot-two">S06</div>
+        <div class="student-dot dot-three">S10</div>
+        <div class="centroid-mark">×</div>
+        <span class="scribble">nearest<br>centre</span>
+      </div>
+    </section>
+
+    <div class="process-strip" aria-label="K-means process">
+      <span><b>01</b> Choose K</span><i>→</i><span><b>02</b> Assign nearest</span><i>→</i><span><b>03</b> Update means</span><i>↺</i>
+    </div>
+
+    <section class="workspace" id="simulator">
+      <aside class="input-panel card" aria-labelledby="inputTitle">
+        <div class="card-heading">
+          <div>
+            <p class="step-label">01 · INPUT</p>
+            <h2 id="inputTitle">Student marks</h2>
+          </div>
+          <button class="text-button" id="loadSample" type="button">Reset sample</button>
+        </div>
+
+        <div class="table-wrap input-table-wrap">
+          <table class="input-table">
+            <thead><tr><th>Student</th><th>Maths</th><th>Science</th><th>English</th><th><span class="sr-only">Remove</span></th></tr></thead>
+            <tbody id="inputRows"></tbody>
+          </table>
+        </div>
+        <button class="add-button" id="addStudent" type="button"><span>+</span> Add student</button>
+
+        <div class="settings">
+          <label for="kValue">Number of groups (K)</label>
+          <div class="segmented" id="kValue" role="radiogroup" aria-label="Number of groups">
+            <button type="button" data-k="2" role="radio" aria-checked="false">2</button>
+            <button type="button" data-k="3" role="radio" aria-checked="true">3</button>
+            <button type="button" data-k="4" role="radio" aria-checked="false">4</button>
+            <button type="button" data-k="5" role="radio" aria-checked="false">5</button>
+          </div>
+          <p id="initDescription">Centroids start with K-means++.</p>
+
+          <div class="initialization">
+            <span class="setting-label">Initial centroid method</span>
+            <div class="method-switch" role="radiogroup" aria-label="Initial centroid method">
+              <button type="button" data-init="kmeans++" role="radio" aria-checked="true">K-means++</button>
+              <button type="button" data-init="manual" role="radio" aria-checked="false">Enter manually</button>
+            </div>
+            <div class="manual-centroids" id="manualCentroids" hidden>
+              <div class="manual-heading"><span>Group</span><span>Maths</span><span>Science</span><span>English</span></div>
+              <div id="manualCentroidRows"></div>
+              <p>These coordinates are used as the starting centroids.</p>
+            </div>
+          </div>
+        </div>
+
+        <p class="error" id="inputError" role="alert"></p>
+        <button class="primary-button" id="startButton" type="button">Start simulation <span>→</span></button>
+      </aside>
+
+      <section class="simulation-panel card" aria-labelledby="simulationTitle">
+        <div class="card-heading simulation-heading">
+          <div>
+            <p class="step-label">02 · SIMULATE</p>
+            <h2 id="simulationTitle">Cluster movement</h2>
+          </div>
+          <div class="iteration-badge">Iteration <strong id="iterationValue">0</strong></div>
+        </div>
+
+        <div class="chart-shell">
+          <svg id="clusterChart" viewBox="0 0 700 430" role="img" aria-labelledby="chartTitle chartDesc">
+            <title id="chartTitle">Student marks cluster plot</title>
+            <desc id="chartDesc">Mathematics marks on the horizontal axis and Science marks on the vertical axis. Colours show K-means groups.</desc>
+          </svg>
+          <div class="chart-empty" id="chartEmpty">
+            <span class="mini-clusters" aria-hidden="true"><i></i><i></i><i></i></span>
+            <strong>Your clusters will appear here</strong>
+            <p>Start the simulation to place the first centroids.</p>
+          </div>
+        </div>
+        <p class="chart-note">The chart shows Maths × Science. English is also used in every distance calculation.</p>
+
+        <div class="controls" aria-label="Simulation controls">
+          <button class="control-button" id="resetButton" type="button" disabled aria-label="Reset simulation">↺</button>
+          <button class="play-button" id="playButton" type="button" disabled><span id="playIcon">▶</span> Run to result</button>
+          <button class="control-button next-button" id="stepButton" type="button" disabled aria-label="Run one iteration">Step <span>→</span></button>
+        </div>
+
+        <div class="metrics" aria-live="polite">
+          <div><span>WCSS</span><strong id="wcssValue">—</strong></div>
+          <div><span>Centroid movement</span><strong id="movementValue">—</strong></div>
+          <div><span>Status</span><strong id="runStatus">Not started</strong></div>
+        </div>
+
+        <div class="history-nav" id="historyNav" hidden>
+          <span><b>Iteration history</b><small id="historyPosition">Step 0 of 0</small></span>
+          <div>
+            <button type="button" id="historyPrev" aria-label="Previous iteration">←</button>
+            <button type="button" id="historyNext" aria-label="Next iteration">→</button>
+          </div>
+        </div>
+      </section>
+    </section>
+
+    <section class="post-analysis" id="postAnalysis" aria-labelledby="analysisTitle" hidden>
+      <div class="analysis-heading">
+        <p class="step-label">AFTER THE SIMULATION</p>
+        <h2 id="analysisTitle">Explore the result</h2>
+      </div>
+
+      <details class="distance-details" id="distanceDetails">
+        <summary>Explain one student’s distance calculation <span>+</span></summary>
+        <div class="distance-body">
+          <label for="distanceStudent">Choose student</label>
+          <select id="distanceStudent"></select>
+          <div id="distanceContent"></div>
+        </div>
+      </details>
+
+      <div class="outlier-demo">
+        <div>
+          <h3>Outlier demonstration</h3>
+          <p>Add one unusual mark pattern, run the simulation again, and compare how far a centroid moves.</p>
+        </div>
+        <button type="button" id="addOutlierButton">Add outlier student</button>
+        <p class="outlier-status" id="outlierStatus"></p>
+        <div class="outlier-comparison" id="outlierComparison" hidden></div>
+      </div>
+    </section>
+
+    <section class="results card" id="results" aria-labelledby="resultsTitle">
+      <div class="card-heading">
+        <div>
+          <p class="step-label">03 · RESULT</p>
+          <h2 id="resultsTitle">Groups and average marks</h2>
+        </div>
+        <span class="result-state" id="resultState">Waiting for simulation</span>
+      </div>
+      <div class="group-cards" id="groupCards">
+        <div class="result-empty">Run the simulation to see group members, centroids, and final assignments.</div>
+      </div>
+      <details class="result-details" id="resultTableWrap" hidden>
+        <summary>View student assignments <span>+</span></summary>
+        <div class="table-wrap result-table-wrap">
+          <table class="result-table">
+            <thead><tr><th>Student</th><th>Marks (M, S, E)</th><th>Group</th><th>Distance to centroid</th></tr></thead>
+            <tbody id="resultRows"></tbody>
+          </table>
+        </div>
+      </details>
+    </section>
+
+    <section class="formula-section" id="formula" aria-labelledby="formulaTitle">
+      <div class="formula-heading">
+        <p class="eyebrow">FORMULAS USED</p>
+        <h2 id="formulaTitle">Only two calculations drive the simulation</h2>
+      </div>
+      <div class="formula-grid">
+        <article class="formula-card">
+          <span>01</span>
+          <div>
+            <h3>Euclidean distance</h3>
+            <p class="formula">d(x,c) = √[(x₁−c₁)² + (x₂−c₂)² + (x₃−c₃)²]</p>
+            <p>Assign each student to the closest centroid using all three subject marks.</p>
+          </div>
+        </article>
+        <article class="formula-card">
+          <span>02</span>
+          <div>
+            <h3>Centroid update</h3>
+            <p class="formula">μⱼ = (1 / |Cⱼ|) Σ x</p>
+            <p>Replace each centroid with the mean marks of the students in its group.</p>
+          </div>
+        </article>
+      </div>
+      <p class="wcss-formula"><b>WCSS</b> = Σⱼ Σ<sub>x∈Cⱼ</sub> ‖x − μⱼ‖² <span>Lower WCSS means tighter groups.</span></p>
+    </section>
+    </div>
+  </main>
+
+  <script src="app.js"></script>
+</body>
+</html>
